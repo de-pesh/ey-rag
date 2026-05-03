@@ -34,7 +34,18 @@ function Message({ msg }) {
               ))}
             </div>
           ) : (
-            <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+            <div style={{ whiteSpace: 'pre-wrap' }}>
+              {msg.content?.split(/(\[.*?\]|Confidence note:.*)/gi).map((part, i) => {
+                if (!part) return null;
+                if (part.match(/^\[.*?\]$/)) {
+                  return <span key={i} className="opacity-60">{part}</span>;
+                }
+                if (part.toLowerCase().startsWith('confidence note:')) {
+                  return <span key={i} className="opacity-60">{part}</span>;
+                }
+                return <span key={i}>{part}</span>;
+              })}
+            </div>
           )}
         </div>
         {msg.sources?.length > 0 && (
