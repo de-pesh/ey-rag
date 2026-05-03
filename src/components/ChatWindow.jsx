@@ -122,7 +122,7 @@ export default function ChatWindow({ onSignOut }) {
     setUploadedFile(null);
     setPipelineStatus(null);
     setShowProgress(false);
-    addSystemMsg('Document removed. History cleared.');
+    setMessages([{ id: 'welcome', role: 'assistant', content: 'Document removed. Upload a new PDF to begin.' }]);
   };
 
   const handleSignOut = async () => {
