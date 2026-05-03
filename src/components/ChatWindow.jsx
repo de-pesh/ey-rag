@@ -216,9 +216,9 @@ export default function ChatWindow({ onSignOut }) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center gap-2 bg-[#1c1c1e] rounded-full px-4 py-1.5"
+                className="flex items-center gap-2 bg-[#1c1c1e]/80 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
               >
-                <span className="text-[#86868b] text-[13px] max-w-[150px] truncate">
+                <span className="text-[#e8e8f0] font-medium text-[13px] max-w-[150px] truncate">
                   {uploadedFile.name.replace('.pdf', '')}
                 </span>
                 {isProcessing && (
@@ -280,7 +280,7 @@ export default function ChatWindow({ onSignOut }) {
               disabled={isProcessing}
               className="
                 w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
-                text-[#86868b] hover:text-[#f5f5f7] transition-colors mb-0.5
+                text-[#86868b] hover:text-[#f5f5f7] transition-colors mb-1
                 disabled:opacity-30 disabled:cursor-not-allowed
               "
               title="Upload PDF"
@@ -330,7 +330,7 @@ export default function ChatWindow({ onSignOut }) {
               onClick={handleSend}
               disabled={!input.trim() || isLoading || isProcessing}
               className="
-                w-9 h-9 rounded-full flex-shrink-0 mb-0.5
+                w-9 h-9 rounded-full flex-shrink-0 mb-1
                 bg-white text-black flex items-center justify-center
                 transition-all duration-200
                 disabled:opacity-20 disabled:bg-[#333] disabled:text-[#888] disabled:cursor-not-allowed
