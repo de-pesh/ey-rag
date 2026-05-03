@@ -4,8 +4,8 @@
 // ============================================================
 
 // ── 1. BASE URL ──────────────────────────────────────────────
-export const BASE_URL = 'https://3b06-86-98-81-86.ngrok-free.app';
-
+// export const BASE_URL = 'https://3b06-86-98-81-86.ngrok-free.app';
+export const BASE_URL = 'https://7d14-86-98-81-86.ngrok-free.app';
 // ── 2. ENDPOINTS ─────────────────────────────────────────────
 export const ENDPOINTS = {
   upload: `${BASE_URL}/upload`,        // POST  multipart — streams SSE progress
