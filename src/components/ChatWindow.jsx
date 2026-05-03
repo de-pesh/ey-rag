@@ -270,7 +270,7 @@ export default function ChatWindow({ onSignOut }) {
         </AnimatePresence>
 
         {/* Input area */}
-        <div className="px-4 pb-8 pt-2 shrink-0 bg-gradient-to-t from-[#000000] via-[#000000]/95 to-transparent">
+        <div className="px-4 pb-8 pt-2 shrink-0 sticky bottom-0 z-10 bg-gradient-to-t from-[#000000] via-[#000000]/95 to-transparent">
           <div className="flex items-end gap-2 bg-[#1c1c1e] rounded-3xl p-1.5 pl-2 border border-[#2c2c2e] focus-within:border-[#4c4c4e] transition-colors">
             {/* PDF upload button */}
             <motion.button
