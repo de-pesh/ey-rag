@@ -25,7 +25,7 @@ function Message({ msg }) {
         `}>
           {msg.streaming && !msg.content ? (
             <div className="flex gap-1.5 py-2 px-1">
-              {[0,1,2].map(i => (
+              {[0, 1, 2].map(i => (
                 <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-[#888]"
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.2 }}
@@ -134,7 +134,7 @@ export default function ChatWindow({ onSignOut }) {
   const handleRemoveFile = async () => {
     wsRef.current?.close();
     if (uploadedFile?.id) {
-      try { await clearBackendSession(uploadedFile.id); } catch {}
+      try { await clearBackendSession(uploadedFile.id); } catch { }
     }
     setUploadedFile(null);
     setPipelineStatus(null);
@@ -145,7 +145,7 @@ export default function ChatWindow({ onSignOut }) {
   const handleSignOut = async () => {
     wsRef.current?.close();
     if (uploadedFile?.id) {
-      try { await clearBackendSession(uploadedFile.id); } catch {}
+      try { await clearBackendSession(uploadedFile.id); } catch { }
     }
     onSignOut();
   };
@@ -206,7 +206,7 @@ export default function ChatWindow({ onSignOut }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-[#000000]/80 backdrop-blur-xl shrink-0 sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <span className="text-[#f5f5f7] font-medium text-lg tracking-tight">RAG Studio</span>
+            <span className="text-[#f5f5f7] font-medium text-lg tracking-tight">RAG</span>
           </div>
 
           {/* Active file badge */}
@@ -286,7 +286,7 @@ export default function ChatWindow({ onSignOut }) {
               title="Upload PDF"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
               </svg>
             </motion.button>
             <input
@@ -340,8 +340,8 @@ export default function ChatWindow({ onSignOut }) {
                 <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
               ) : (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="19" x2="12" y2="5"/>
-                  <polyline points="5 12 12 5 19 12"/>
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
                 </svg>
               )}
             </motion.button>
