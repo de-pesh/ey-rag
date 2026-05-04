@@ -48,15 +48,6 @@ function Message({ msg }) {
             </div>
           )}
         </div>
-        {msg.sources?.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {msg.sources.map((s, i) => (
-              <span key={i} className="text-[10px] text-[#86868b] bg-[#1c1c1e] rounded-full px-2 py-0.5">
-                doc·{s.chunk_id ?? i}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </motion.div>
   );
@@ -123,8 +114,10 @@ export default function ChatWindow({ onSignOut }) {
         addSystemMsg(`⚠ Failed to process "${file.name}".`);
       }
     } catch (err) {
-      setPipelineStatus({ stage: 'ERROR', label: err.message, progress: 0 });
-      addSystemMsg(`⚠ Upload error: ${err.message}`);
+      const isOffline = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+      const errorMsg = isOffline ? 'RAG offline' : err.message;
+      setPipelineStatus({ stage: 'ERROR', label: errorMsg, progress: 0 });
+      addSystemMsg(`⚠ Upload error: ${errorMsg}`);
     }
   }, [sessionId]);
 
@@ -152,24 +145,52 @@ export default function ChatWindow({ onSignOut }) {
     const assistantId = Date.now() + 1;
     setMessages(prev => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '', streaming: true }]);
 
+    let smoothInterval;
     try {
-      let streamed = '';
+      let targetContent = '';
+      let displayedContent = '';
+      
+      smoothInterval = setInterval(() => {
+        if (displayedContent.length < targetContent.length) {
+          const gap = targetContent.length - displayedContent.length;
+          const charsToAdd = Math.max(1, Math.ceil(gap / 3)); // dynamically adjust typing speed based on gap
+          displayedContent = targetContent.slice(0, displayedContent.length + charsToAdd);
+          
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? { ...m, content: displayedContent, streaming: true } : m
+          ));
+        }
+      }, 25);
+
       const result = await fetchChatResponse(question, sessionId, (chunk) => {
-        streamed += chunk.delta ?? chunk.token ?? chunk.text ?? '';
-        setMessages(prev => prev.map(m =>
-          m.id === assistantId ? { ...m, content: streamed, streaming: true } : m
-        ));
+        if (chunk.code === 'CHAT_CHUNK') {
+          targetContent += chunk.message || '';
+        }
       });
 
-      const answer = result?.answer ?? streamed ?? 'No response received.';
+      // Allow the smooth typing effect to finish catching up before finalizing
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (displayedContent.length >= targetContent.length) {
+            clearInterval(check);
+            resolve();
+          }
+        }, 25);
+      });
+      clearInterval(smoothInterval);
+
+      const answer = result?.answer ?? targetContent ?? 'No response received.';
       setMessages(prev => prev.map(m =>
         m.id === assistantId
-          ? { ...m, content: answer, streaming: false, sources: result?.sources }
+          ? { ...m, content: answer, streaming: false, sources: result?.citations }
           : m
       ));
     } catch (err) {
+      if (smoothInterval) clearInterval(smoothInterval);
+      const isOffline = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+      const errorMsg = isOffline ? 'RAG offline' : `Error: ${err.message}`;
       setMessages(prev => prev.map(m =>
-        m.id === assistantId ? { ...m, content: `Error: ${err.message}`, streaming: false } : m
+        m.id === assistantId ? { ...m, content: errorMsg, streaming: false } : m
       ));
     } finally {
       setIsLoading(false);

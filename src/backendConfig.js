@@ -9,7 +9,7 @@ export const BASE_URL = 'https://7d14-86-98-81-86.ngrok-free.app';
 // ── 2. ENDPOINTS ─────────────────────────────────────────────
 export const ENDPOINTS = {
   upload: `${BASE_URL}/upload`,        // POST  multipart — streams SSE progress
-  chat: `${BASE_URL}/chat`,          // POST  { session_id, question }
+  chat: `${BASE_URL}/chat/stream`,     // POST  { session_id, question }
   history: `${BASE_URL}/chat/history`,  // GET?session_id=  /  DELETE?session_id=
   health: `${BASE_URL}/health`,        // GET   liveness check
 };
@@ -21,9 +21,9 @@ export const ENDPOINTS = {
 export const PIPELINE_STATUS = {
   PARSING: { stage: 'PARSING', label: 'Reading & parsing PDF…', color: '#60a5fa' },
   CHUNKING: { stage: 'CHUNKING', label: 'Splitting into chunks…', color: '#f472b6' },
-  VECTOR_INDEX: { stage: 'VECTOR_INDEX', label: 'Building vector index…', color: '#a78bfa' },
+  VECTOR_INDEX: { stage: 'VECTOR INDEX', label: 'Building vector index…', color: '#a78bfa' },
   BM25_INDEX: { stage: 'BM25_INDEX', label: 'Building BM25 keyword index…', color: '#fb923c' },
-  WIRING: { stage: 'WIRING', label: 'Wiring retrieval pipeline…', color: '#34d399' },
+  WIRING: { stage: 'CONNECTING', label: 'Wiring retrieval pipeline…', color: '#34d399' },
   READY: { stage: 'READY', label: 'Indexed & ready to chat!', color: '#4ade80' },
   ERROR: { stage: 'ERROR', label: 'Processing failed.', color: '#f87171' },
 };
@@ -160,36 +160,38 @@ export async function fetchChatResponse(question, sessionId, onChunk) {
     throw new Error(err.detail ?? `Chat failed: HTTP ${res.status}`);
   }
 
-  // Streaming path (text/event-stream)
-  if (res.headers.get('content-type')?.includes('text/event-stream')) {
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let lastPayload = null;
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalPayload = null;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
 
-      for (const line of lines) {
-        if (!line.startsWith('data:')) continue;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop(); // keep partial last line
+
+    for (const line of lines) {
+      if (line.startsWith('data:')) {
         const raw = line.slice(5).trim();
         if (!raw || raw === '[DONE]') continue;
         try {
-          const parsed = JSON.parse(raw);
-          onChunk?.(parsed);
-          lastPayload = parsed;
-        } catch { /* partial token */ }
+          const data = JSON.parse(raw);
+          if (data.code === 'CHAT_CHUNK') {
+            onChunk?.(data);
+          } else if (data.code === 'CHAT_END') {
+            finalPayload = data;
+          }
+        } catch (e) {
+          // Ignore parsing errors for partial or malformed chunks
+        }
       }
     }
-    return lastPayload;
   }
 
-  // Standard JSON path
-  return res.json();
+  return finalPayload;
 }
 
 /**
@@ -226,7 +228,8 @@ export async function verifyAccessCode(code) {
   // Simulate an API call
   return new Promise((resolve) => {
     setTimeout(() => {
-      if (code.length === 6) {
+      // Hardcoded password for now. Change this as needed or connect to real backend.
+      if (code === '123456') {
         resolve({ success: true });
       } else {
         resolve({ success: false, message: 'Invalid access code.' });

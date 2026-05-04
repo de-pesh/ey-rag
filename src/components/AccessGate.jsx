@@ -17,14 +17,18 @@ export default function AccessGate({ onAuthenticated }) {
     next[i] = val.toUpperCase();
     setCode(next);
     setError('');
+
     if (val && i < 5) inputs.current[i + 1]?.focus();
+
+    const full = next.join('');
+    if (full.length === 6) handleSubmit(full);
   };
 
   const handleKeyDown = (i, e) => {
     if (e.key === 'Backspace' && !code[i] && i > 0) {
       inputs.current[i - 1]?.focus();
     }
-    if (e.key === 'Enter') handleSubmit();
+    if (e.key === 'Enter') handleSubmit(code.join(''));
   };
 
   const handlePaste = (e) => {
@@ -33,10 +37,13 @@ export default function AccessGate({ onAuthenticated }) {
     for (let i = 0; i < 6; i++) next[i] = text[i] ?? '';
     setCode(next);
     inputs.current[Math.min(text.length, 5)]?.focus();
+
+    const full = next.join('');
+    if (full.length === 6) handleSubmit(full);
   };
 
-  const handleSubmit = async () => {
-    const full = code.join('');
+  const handleSubmit = async (overrideCode) => {
+    const full = typeof overrideCode === 'string' ? overrideCode : code.join('');
     if (full.length < 6) { triggerShake('Enter all 6 characters.'); return; }
     setLoading(true);
     try {
@@ -48,9 +55,7 @@ export default function AccessGate({ onAuthenticated }) {
         triggerShake(res.message ?? 'Invalid access code.');
       }
     } catch {
-      // DEV: bypass when backend not connected
-      saveSession({ authenticated: true, code: full });
-      onAuthenticated();
+      triggerShake('Failed to verify code. Server offline.');
     } finally {
       setLoading(false);
     }
@@ -85,10 +90,7 @@ export default function AccessGate({ onAuthenticated }) {
             transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="w-16 h-16 rounded-3xl bg-[#1c1c1e] border border-[#2c2c2e] flex items-center justify-center shadow-2xl"
           >
-            <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
-              <path d="M6 22L14 6L22 22" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M8.5 17H19.5" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
+            <span className="text-[#f5f5f7] font-bold text-xl tracking-wider">RAG</span>
           </motion.div>
           <div className="text-center space-y-1">
             <h1 className="text-[#f5f5f7] text-2xl font-medium tracking-tight">RAG Studio</h1>
@@ -112,6 +114,7 @@ export default function AccessGate({ onAuthenticated }) {
               onChange={e => handleChange(i, e.target.value)}
               onKeyDown={e => handleKeyDown(i, e)}
               onPaste={handlePaste}
+              disabled={loading}
               className={`
                 w-12 h-14 text-center text-[#f5f5f7] text-xl font-medium
                 bg-[#1c1c1e] border rounded-2xl outline-none
@@ -143,29 +146,22 @@ export default function AccessGate({ onAuthenticated }) {
           )}
         </AnimatePresence>
 
-        {/* Submit */}
-        <motion.button
-          onClick={handleSubmit}
-          disabled={loading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="
-            w-full max-w-[280px] h-[52px] rounded-full bg-[#f5f5f7] text-black
-            text-[15px] font-medium
-            hover:bg-white transition-all duration-300
-            flex items-center justify-center gap-2
-            disabled:opacity-50 disabled:cursor-not-allowed
-          "
-        >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-          ) : (
-            <span>Continue</span>
+        {/* Loading Indicator */}
+        <AnimatePresence>
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="h-[52px] flex items-center justify-center"
+            >
+              <div className="w-6 h-6 border-2 border-white/20 border-t-blue-500 rounded-full animate-spin" />
+            </motion.div>
           )}
-        </motion.button>
+        </AnimatePresence>
 
         <p className="text-[#555555] text-xs">
-          Secured · Encrypted · Private
+          RAG · Private
         </p>
       </motion.div>
     </div>
